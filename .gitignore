@@ -1,0 +1,8 @@
+# служебное
+Thumbs.db
+desktop.ini
+.DS_Store
+ehthumbs.db
+
+# зависимости (на случай локальной сборки)
+node_modules/

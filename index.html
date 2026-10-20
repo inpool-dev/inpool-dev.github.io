@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>pivodeveloper</title>
+    <meta name="description" content="pivodeveloper — сайты, Telegram и Discord боты, автоматизация. Портфолио и контакты.">
+    <meta name="theme-color" content="#000000">
+    <!-- Favicon: GIF с fallback на PNG -->
+    <link rel="icon" type="image/gif" href="images/faviconn.gif">
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Covered+By+Your+Grace&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab&amp;display=swap">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/Navigation-Clean.css">
+    <style>
+        /* Градиентовый бело-черный глаз - везде одинаковый */
+        * {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><defs><radialGradient id="eyeGrad" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="%23ffffff"/><stop offset="100%" stop-color="%23000000"/></radialGradient><radialGradient id="pupilGrad" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="%23333333"/><stop offset="100%" stop-color="%23000000"/></radialGradient></defs><ellipse cx="14" cy="14" rx="12" ry="10" fill="url(%23eyeGrad)" stroke="%23ffffff" stroke-width="1"/><circle cx="14" cy="14" r="4" fill="url(%23pupilGrad)"/><circle cx="12" cy="12" r="1.5" fill="white" opacity="0.8"/></svg>') 14 14, auto !important;
+        }
+        
+        #background {
+            transition: opacity 0.8s ease;
+        }
+        
+        /* ---------- текстовое меню вокруг графа ---------- */
+        .navigation-clean.navbar.graph-nav {
+            position: fixed;
+            inset: 0;
+            padding: 0;
+            background: transparent;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .graph-nav .gm-item {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            pointer-events: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 9px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 999px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012));
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            -webkit-backdrop-filter: blur(6px);
+            backdrop-filter: blur(6px);
+            font-family: 'consolas', 'SFMono-Regular', Menlo, monospace;
+            font-size: 13px;
+            line-height: 1;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.72);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+        /* точка-индикатор слева */
+        .graph-nav .gm-item::before {
+            content: '';
+            flex: 0 0 auto;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.28);
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+        }
+        .graph-nav .gm-item:hover {
+            transform: translate(-50%, -50%) translateY(-1px);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.24);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55), 0 0 26px rgba(255, 255, 255, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+        .graph-nav .gm-item:hover::before {
+            background: #7ef0a8;
+            box-shadow: 0 0 10px rgba(126, 240, 168, 0.75);
+        }
+        .graph-nav .gm-item.active {
+            color: #ffffff;
+            border-color: rgba(126, 240, 168, 0.4);
+            background: linear-gradient(180deg, rgba(126, 240, 168, 0.11), rgba(255, 255, 255, 0.02));
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55), 0 0 30px rgba(126, 240, 168, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+        }
+        .graph-nav .gm-item.active::before {
+            background: #7ef0a8;
+            box-shadow: 0 0 12px rgba(126, 240, 168, 0.9);
+        }
+        /* позиции вокруг ядра графа */
+        .gm-bio { left: 36%; top: 40%; }
+        .gm-portfolio { left: 36%; top: 60%; }
+        .gm-contacts { left: 64%; top: 40%; }
+        .gm-services { left: 64%; top: 60%; }
+        .gm-clips { left: 50%; top: 72%; }
+
+        /* ---------- окно выбора клипов ---------- */
+        .clips-modal {
+            max-width: 720px;
+        }
+
+        /* Стартовый экран */
+        .startthing {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ---------- на маленьких экранах меню собирается в строку снизу ---------- */
+        @media (max-width: 900px) {
+            .navigation-clean.navbar.graph-nav {
+                top: auto;
+                height: auto;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: center;
+                gap: 2px;
+                padding: 0 14px 22px;
+            }
+            .graph-nav .gm-item {
+                position: static;
+                transform: none;
+                gap: 6px;
+                padding: 11px 14px;
+                font-size: 12px;
+            }
+            .graph-nav .gm-item:hover {
+                transform: none;
+            }
+            .graph-nav .gm-clips {
+                order: -1;
+            }
+        }
+    </style>
+</head> 
+<body class="bmain">
+    <script>
+        var _app = function () {
+            this.id = 0;
+            this.videoElement = null;
+            this.musicVolume = 0.15;
+            this.musicFadeIn = 4000;
+            this.Texts = [
+                "developer discord",
+                "developer telegram",
+                "developer other",
+                "plusvibe men",
+                "plusvibe girl",
+                "owner moonlight",
+                "eshe mnogo serverov, mne prosto len ix dobavlyat",
+                "ne chitai dalshe"
+            ];
+            this.videoSource = "media/bushido.mp4";
+            this.currentBg = "Бушидик";
+        };
+        var app = new _app();
+    </script>
+    <div class="startthing" id="startThing">
+        <canvas class="st-canvas" id="stCanvas"></canvas>
+        <div class="st-boot" id="stBoot"></div>
+        <i><a class="next" id="startLink">> start <</a></i>
+        <div class="st-hint" id="stHint">нажми, чтобы войти · ENTER</div>
+        <div class="st-corner st-left"><i class="st-dot"></i><span>pivodeveloper © 2026</span></div>
+        <div class="st-corner st-right" id="stClock">--:--:--</div>
+    </div>
+    <div class="background">
+        <div id="pattern"></div>
+        <canvas class="bg-canvas" id="bgCanvas"></canvas>
+        <canvas class="bg-graph" id="bgGraph"></canvas>
+        <div class="bg-vignette"></div>
+        <div class="bg-halo" id="bgHalo"></div>
+        <p class="hero-hint">// наведите — граф реагирует на курсор · разделы — вокруг ядра</p>
+        <video id="background" loop preload="none">
+            <source src="media/bushido.mp4" type="video/mp4">
+            <script>
+                var video = document.getElementById("background");
+                app.videoElement = video;
+                app.videoElement.volume = 0.15;
+            </script>
+        </video>  
+    </div>
+    <div>
+        <nav class="navbar navbar-light navbar-expand-lg navigation-clean graph-nav">
+            <a class="gm-item gm-bio" href="#" id="bioTab">BIO</a>
+            <a class="gm-item gm-portfolio" href="#" id="portfolioTab">Портфолио</a>
+            <a class="gm-item gm-contacts" href="#" id="contactsTab">Контакты</a>
+            <a class="gm-item gm-services" href="#" id="servicesTab">Услуги</a>
+            <a class="gm-item gm-clips" href="#" id="bgToggleBtn">клипы</a>
+        </nav>
+        <section class="main">
+            <div class="text-start containers">
+                <div class="Brand">
+                    <div class="hero">
+                        <p class="hero-kicker"><i class="hero-mark"></i>pivodeveloper<span class="hero-caret">_</span></p>
+                        <h1 class="Paragraph Hello" id="hello">Developer!</h1>
+                        <p class="a"><span id="Bruh" class="Paragraph"></span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- BIO модальное окно (открывается по вкладке BIO) -->
+        <div class="bio-modal-overlay" id="bioOverlay">
+            <div class="bio-modal" role="dialog" aria-modal="true" aria-label="BIO">
+                <div class="bio-modal-glow"></div>
+                <button class="bio-modal-close" id="bioClose" title="Закрыть">&times;</button>
+
+                <div class="bio-head">
+                    <div class="bio-avatar-wrap">
+                        <img class="bio-avatar" src="images/avatar.jpg" alt="pivodeveloper">
+                    </div>
+                    <div class="bio-head-info">
+                        <h2 class="bio-name">pivodeveloper</h2>
+                        <p class="bio-role">Начинающий веб-разработчик • опытный TG и Discord разработчик</p>
+                        <div class="bio-tags">
+                            <span class="bio-status"><span class="bio-status-dot"></span>онлайн</span>
+                            <span class="bio-tag">web</span>
+                            <span class="bio-tag">telegram</span>
+                            <span class="bio-tag">discord</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bio-divider"></div>
+
+                <div class="bio-code">
+                    <div class="bio-code-bar">
+                        <span class="bio-dot bio-dot-r"></span>
+                        <span class="bio-dot bio-dot-y"></span>
+                        <span class="bio-dot bio-dot-g"></span>
+                        <span class="bio-code-file">смыслжизни.bio</span>
+                    </div>
+                    <div class="bio-code-body">
+                        <p class="bio-comment">Однажды меня спросили: «Что для меня хорошая жизнь?», а я ответил:</p>
+                        <p class="bio-comment">Хорошая жизнь — это когда ты делаешь свой выбор, и рядом есть люди, которые готовы его поддержать. Но ещё это когда ты не только отдаёшь поддержку, а не боишься ждать её в ответ.</p>
+                        <p class="bio-comment">Я постоянно поддерживаю людей и не всегда получаю то же взамен — и постепенно понимаю, что хорошая жизнь начинается там, где поддержка не в одну сторону.</p>
+                        <p class="bio-comment">Это общение с теми, с кем по-настоящему интересно, когда тебе хочется слушать, говорить, быть рядом — и чувствовать, что это взаимно.</p>
+                        <p class="bio-comment">Хорошая жизнь — это когда можно быть сильным, но можно и позволить себе сказать: «Мне тоже нужна поддержка». Когда ты не раздаёшь себя там, где не ценят, и не боишься выбирать людей, с которыми легко и честно.</p>
+                        <p class="bio-comment">Ведь в итоге хорошая жизнь — это не одиночество сильного, а круг людей, с которыми можно быть собой.</p>
+                    </div>
+                </div>
+
+                <div class="bio-stats">
+                    <div class="bio-stat">
+                        <span class="bio-stat-num">более 20</span>
+                        <span class="bio-stat-label">проектов и ботов</span>
+                    </div>
+                    <div class="bio-stat">
+                        <span class="bio-stat-num">2</span>
+                        <span class="bio-stat-label">направления: сайты и боты</span>
+                    </div>
+                    <div class="bio-stat">
+                        <span class="bio-stat-num">∞</span>
+                        <span class="bio-stat-label">строк кода</span>
+                    </div>
+                </div>
+
+                <div class="bio-blocks">
+                    <div class="bio-block">
+                        <div class="bio-block-title">чем занимаюсь</div>
+                        <ul class="bio-list">
+                            <li>Сайты и лендинги под ключ</li>
+                            <li>Telegram-боты</li>
+                            <li>Discord-боты</li>
+                        </ul>
+                    </div>
+                    <div class="bio-block">
+                        <div class="bio-block-title">интересы</div>
+                        <div class="bio-chips">
+                            <span>музыка</span>
+                            <span>спорт</span>
+                            <span>отношения</span>
+                        </div>
+                        <div class="bio-block-title spaced">сейчас работаю над</div>
+                        <p class="bio-block-text">периметр — сайт о цифровой гигиене.</p>
+                    </div>
+                </div>
+
+                <div class="bio-motto">С желанием и усилием ты обретаешь всё, чего хочешь; без желания — теряешь всё, что имеешь</div>
+
+                <div class="bio-foot">
+                    <div class="bio-stack">
+                        <span>HTML</span>
+                        <span>CSS</span>
+                        <span>JS</span>
+                        <span>Python</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Портфолио -->
+        <div class="bio-modal-overlay" id="portfolioOverlay">
+            <div class="bio-modal portfolio-modal" role="dialog" aria-modal="true" aria-label="Портфолио">
+                <div class="bio-modal-glow"></div>
+                <button class="bio-modal-close" id="portfolioClose" title="Закрыть">&times;</button>
+
+                <div class="bio-head portfolio-head">
+                    <div class="bio-head-info">
+                        <h2 class="bio-name">Портфолио</h2>
+                        <p class="bio-role">Сайты, Telegram- и Discord-боты — от идеи до готового продукта</p>
+                        <div class="bio-tags">
+                            <span class="bio-status"><span class="bio-status-dot"></span>открыт к заказам</span>
+                            <span class="bio-tag">web</span>
+                            <span class="bio-tag">telegram</span>
+                            <span class="bio-tag">discord</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bio-divider"></div>
+
+                <div class="pf-filters" id="pfFilters">
+                    <button class="pf-filter is-active" type="button" data-filter="all">все <span class="pf-count">6</span></button>
+                    <button class="pf-filter" type="button" data-filter="web">сайты <span class="pf-count">3</span></button>
+                    <button class="pf-filter" type="button" data-filter="telegram">telegram <span class="pf-count">1</span></button>
+                    <button class="pf-filter" type="button" data-filter="discord">discord <span class="pf-count">2</span></button>
+                </div>
+
+                <div class="pf-grid" id="pfGrid">
+                    <article class="pf-card" data-type="web" data-project="perimetr">
+                        <div class="pf-cover pf-cover-web">
+                            <span class="pf-mono">П</span>
+                            <span class="pf-badge">сайт</span>
+                            <span class="pf-open">подробнее →</span>
+                        </div>
+                        <div class="pf-body">
+                            <h3 class="pf-title">Периметр</h3>
+                            <p class="pf-desc">Сайт о цифровой безопасности: граф связей, инструменты, анонимность. Роль — тимлид проекта.</p>
+                            <div class="pf-tech"><span>HTML</span><span>CSS</span><span>JS</span><span>canvas</span></div>
+                        </div>
+                        <div class="pf-meta">
+                            <span class="pf-state pf-state-live">в работе</span>
+                            <span class="pf-year">2026</span>
+                        </div>
+                    </article>
+
+                    <article class="pf-card" data-type="web" data-project="pivodeveloper">
+                        <div class="pf-cover pf-cover-web">
+                            <span class="pf-mono">P</span>
+                            <span class="pf-badge">сайт</span>
+                            <span class="pf-open">подробнее →</span>
+                        </div>
+                        <div class="pf-body">
+                            <h3 class="pf-title">Сайт-портфолио</h3>
+                            <p class="pf-desc">Личный сайт для знакомства со мной: BIO, портфолио проектов и граф контактов.</p>
+                            <div class="pf-tech"><span>HTML</span><span>CSS</span><span>JS</span><span>jQuery</span></div>
+                        </div>
+                        <div class="pf-meta">
+                            <span class="pf-state pf-state-live">в работе</span>
+                            <span class="pf-year">2026</span>
+                        </div>
+                    </article>
+
+                    <article class="pf-card" data-type="discord" data-project="moonlight">
+                        <div class="pf-cover pf-cover-discord">
+                            <span class="pf-mono">ML</span>
+                            <span class="pf-badge">discord</span>
+                            <span class="pf-open">подробнее →</span>
+                        </div>
+                        <div class="pf-body">
+                            <h3 class="pf-title">MoonLight</h3>
+                            <p class="pf-desc">Discord-сообщество вокруг утилиты для краша серверов — более 100 активных пользователей.</p>
+                            <div class="pf-tech"><span>JavaScript</span><span>Node.js</span><span>Discord</span></div>
+                        </div>
+                        <div class="pf-meta">
+                            <span class="pf-state pf-state-past">в прошлом</span>
+                            <span class="pf-year">2023</span>
+                        </div>
+                    </article>
+
+                    <article class="pf-card" data-type="telegram" data-project="telegram-bots">
+                        <div class="pf-cover pf-cover-telegram">
+                            <span class="pf-mono">TG</span>
+                            <span class="pf-badge">telegram</span>
+                            <span class="pf-open">подробнее →</span>
+                        </div>
+                        <div class="pf-body">
+                            <h3 class="pf-title">Telegram-боты</h3>
+                            <p class="pf-desc">Боты на заказ и в портфолио: заявки, рассылки, админка. Работаю быстро и качественно.</p>
+                            <div class="pf-tech"><span>Python</span><span>aiogram</span><span>API</span></div>
+                        </div>
+                        <div class="pf-meta">
+                            <span class="pf-state pf-state-live">в работе</span>
+                            <span class="pf-year">2022–2026</span>
+                        </div>
+                    </article>
+
+                    <article class="pf-card" data-type="discord" data-project="discord-bots">
+                        <div class="pf-cover pf-cover-discord">
+                            <span class="pf-mono">DS</span>
+                            <span class="pf-badge">discord</span>
+                            <span class="pf-open">подробнее →</span>
+                        </div>
+                        <div class="pf-body">
+                            <h3 class="pf-title">Discord-боты</h3>
+                            <p class="pf-desc">Боты на заказ и в портфолио: модерация, тикеты, музыка, логи. Работаю быстро и качественно.</p>
+                            <div class="pf-tech"><span>Python</span><span>JS</span><span>API</span></div>
+                        </div>
+                        <div class="pf-meta">
+                            <span class="pf-state pf-state-live">в работе</span>
+                            <span class="pf-year">2020–2026</span>
+                        </div>
+                    </article>
+
+                    <article class="pf-card" data-type="web" data-project="landings">
+                        <div class="pf-cover pf-cover-web">
+                            <span class="pf-mono">LP</span>
+                            <span class="pf-badge">сайт</span>
+                            <span class="pf-open">подробнее →</span>
+                        </div>
+                        <div class="pf-body">
+                            <h3 class="pf-title">Лендинги под ключ</h3>
+                            <p class="pf-desc">Лендинги на заказ и в портфолио: от структуры и дизайна до публикации. Работаю быстро и качественно.</p>
+                            <div class="pf-tech"><span>HTML</span><span>CSS</span><span>JS</span></div>
+                        </div>
+                        <div class="pf-meta">
+                            <span class="pf-state pf-state-live">в работе</span>
+                            <span class="pf-year">2026</span>
+                        </div>
+                    </article>
+                </div>
+
+                <p class="pf-note">// наведи на карточку — оживёт · клик — открыть проект</p>
+
+                <div class="bio-foot">
+                    <div class="ct-note">нужен похожий проект — заглядывай во вкладку «Контакты»</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Описание проекта (открывается по клику на карточку) -->
+        <div class="bio-modal-overlay project-overlay" id="projectOverlay">
+            <div class="bio-modal project-modal" role="dialog" aria-modal="true" aria-label="Проект">
+                <div class="bio-modal-glow"></div>
+                <button class="bio-modal-close" id="projectClose" title="Закрыть">&times;</button>
+
+                <div class="pj-head">
+                    <button class="pj-back" id="projectBack" type="button">← назад к портфолио</button>
+                    <span class="pj-badge" id="pjBadge">сайт</span>
+                </div>
+
+                <div class="pj-gallery" id="pjGallery"></div>
+
+                <div class="pj-body">
+                    <h2 class="bio-name pj-title" id="pjTitle">Проект</h2>
+                    <p class="pj-sub" id="pjSub"></p>
+                    <div class="pj-facts" id="pjFacts"></div>
+                    <div class="pf-tech" id="pjTech"></div>
+                    <div class="pj-text" id="pjText"></div>
+                    <div class="pj-links" id="pjLinks"></div>
+                </div>
+
+                <div class="bio-foot">
+                    <div class="pj-meta" id="pjMeta"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Клип (открывается из меню фона) -->
+        <div class="bio-modal-overlay clip-overlay" id="clipOverlay">
+            <div class="bio-modal clip-modal" role="dialog" aria-modal="true" aria-label="Клип">
+                <div class="bio-modal-glow"></div>
+                <button class="bio-modal-close" id="clipClose" title="Закрыть">&times;</button>
+
+                <div class="bio-head clip-head">
+                    <div class="bio-head-info">
+                        <h2 class="bio-name" id="clipTitle">Клип</h2>
+                        <p class="bio-role">клип играет в этом окне · фон сайта не меняется</p>
+                        <div class="bio-tags">
+                            <span class="bio-tag">видео</span>
+                            <span class="bio-tag">по кругу</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bio-divider"></div>
+
+                <div class="clip-player" id="clipPlayer">
+                    <video id="clipVideo" loop playsinline preload="metadata"></video>
+
+                    <div class="cp-hint">space — пуск · ← → — 5 сек · m — звук · f — экран</div>
+
+                    <div class="cp-bar">
+                        <button class="cp-btn" id="cpPlay" type="button" title="Пуск / пауза (Space)">
+                            <svg class="cp-i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8V4z"/></svg>
+                            <svg class="cp-i-pause" viewBox="0 0 24 24"><path d="M8 4v16M16 4v16"/></svg>
+                        </button>
+
+                        <span class="cp-time" id="cpTime">0:00</span>
+
+                        <div class="cp-track" id="cpTrack">
+                            <span class="cp-fill" id="cpFill"></span>
+                        </div>
+
+                        <span class="cp-time" id="cpTotal">0:00</span>
+
+                        <button class="cp-btn" id="cpMute" type="button" title="Звук (M)">
+                            <svg class="cp-i-sound" viewBox="0 0 24 24">
+                                <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                                <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+                                <path d="M19 5a10 10 0 0 1 0 14"/>
+                            </svg>
+                            <svg class="cp-i-muted" viewBox="0 0 24 24">
+                                <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                                <path d="M16 9.5l5 5M21 9.5l-5 5"/>
+                            </svg>
+                        </button>
+
+                        <button class="cp-btn" id="cpFs" type="button" title="На весь экран (F)">
+                            <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bio-foot">
+                    <div class="ct-note">Esc или клик мимо окна — закрыть · громкость — кнопкой справа</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Контакты — граф связей -->
+        <div class="bio-modal-overlay" id="contactsOverlay">
+            <div class="bio-modal contacts-modal" role="dialog" aria-modal="true" aria-label="Контакты">
+                <div class="bio-modal-glow"></div>
+                <button class="bio-modal-close" id="contactsClose" title="Закрыть">&times;</button>
+
+                <div class="bio-head contacts-head">
+                    <div class="bio-head-info">
+                        <h2 class="bio-name">Контакты</h2>
+                        <p class="bio-role">Три канала связи — пиши туда, где удобнее</p>
+                        <div class="bio-tags">
+                            <span class="bio-status"><span class="bio-status-dot"></span>на связи</span>
+                            <span class="bio-tag">telegram</span>
+                            <span class="bio-tag">discord</span>
+                            <span class="bio-tag">github</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bio-divider"></div>
+
+                <div class="ct-list">
+                    <a class="ct-card" href="https://t.me/pivodeveloper" target="_blank" rel="noopener">
+                        <span class="ct-mark"></span>
+                        <span class="ct-text">
+                            <span class="ct-name">Telegram</span>
+                            <span class="ct-sub">@pivodeveloper</span>
+                        </span>
+                        <span class="ct-arrow">↗</span>
+                    </a>
+
+                    <a class="ct-card" href="https://discord.com/users/1138104904045576202" target="_blank" rel="noopener">
+                        <span class="ct-mark"></span>
+                        <span class="ct-text">
+                            <span class="ct-name">Discord</span>
+                            <span class="ct-sub">pivodeveloper</span>
+                        </span>
+                        <span class="ct-arrow">↗</span>
+                    </a>
+
+                    <a class="ct-card" href="https://github.com/pivodeveloper" target="_blank" rel="noopener">
+                        <span class="ct-mark"></span>
+                        <span class="ct-text">
+                            <span class="ct-name">GitHub</span>
+                            <span class="ct-sub">pivodeveloper</span>
+                        </span>
+                        <span class="ct-arrow">↗</span>
+                    </a>
+                </div>
+
+                <p class="ct-hint">// клик — открыть в новой вкладке</p>
+
+                <div class="bio-foot">
+                    <div class="ct-note">отвечаю быстрее всего в Telegram · Discord — профиль, GitHub — код</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Услуги — модальное окно -->
+    <div class="bio-modal-overlay" id="servicesOverlay">
+        <div class="bio-modal services-modal" role="dialog" aria-modal="true" aria-label="Услуги">
+            <div class="bio-modal-glow"></div>
+            <button class="bio-modal-close" id="servicesClose" title="Закрыть">&times;</button>
+
+            <div class="bio-head contacts-head">
+                <div class="bio-head-info">
+                    <h2 class="bio-name">Услуги</h2>
+                    <p class="bio-role">Что могу сделать — от визитки до бота</p>
+                    <div class="bio-tags">
+                        <span class="bio-status"><span class="bio-status-dot"></span>открыт к заказам</span>
+                        <span class="bio-tag">сайты</span>
+                        <span class="bio-tag">telegram</span>
+                        <span class="bio-tag">discord</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bio-divider"></div>
+
+            <div class="ct-list sv-list">
+                <div class="ct-card sv-card">
+                    <span class="sv-num">01</span>
+                    <span class="ct-text">
+                        <span class="ct-name">Сайты и лендинги</span>
+                        <span class="ct-sub">визитка, портфолио, промо — адаптив, анимации, формы, домен</span>
+                    </span>
+                </div>
+
+                <div class="ct-card sv-card">
+                    <span class="sv-num">02</span>
+                    <span class="ct-text">
+                        <span class="ct-name">Telegram-боты</span>
+                        <span class="ct-sub">заявки, магазины, рассылки, админка, оплата</span>
+                    </span>
+                </div>
+
+                <div class="ct-card sv-card">
+                    <span class="sv-num">03</span>
+                    <span class="ct-text">
+                        <span class="ct-name">Discord-боты</span>
+                        <span class="ct-sub">модерация, роли, тикеты, музыка, интеграции</span>
+                    </span>
+                </div>
+
+                <div class="ct-card sv-card">
+                    <span class="sv-num">04</span>
+                    <span class="ct-text">
+                        <span class="ct-name">Автоматизация и парсинг</span>
+                        <span class="ct-sub">сбор данных, скрипты по расписанию, связки сервисов</span>
+                    </span>
+                </div>
+            </div>
+
+            <p class="ct-hint">// это не весь список — опиши задачу, скажу что реально и за сколько</p>
+
+            <div class="bio-foot">
+                <a class="sv-cta" href="#" id="servicesCta">обсудить задачу</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Клипы — модальное окно выбора -->
+    <div class="bio-modal-overlay" id="clipsOverlay">
+        <div class="bio-modal clips-modal" role="dialog" aria-modal="true" aria-label="клипы">
+            <div class="bio-modal-glow"></div>
+            <button class="bio-modal-close" id="clipsClose" title="Закрыть">&times;</button>
+
+            <div class="bio-head contacts-head">
+                <div class="bio-head-info">
+                    <h2 class="bio-name">клипы</h2>
+                    <p class="bio-role">Выбери клип — он откроется в окне поверх сайта, фон не меняется</p>
+                    <div class="bio-tags">
+                        <span class="bio-tag">видео</span>
+                        <span class="bio-tag">4 клипа</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bio-divider"></div>
+
+            <div class="ct-list">
+                <a class="ct-card clip-pick" href="#" data-clip="media/bushido.mp4" data-name="Бушидик">
+                    <span class="ct-mark"></span>
+                    <span class="ct-text">
+                        <span class="ct-name">Бушидик</span>
+                        <span class="ct-sub">клип · играет по кругу</span>
+                    </span>
+                    <span class="ct-arrow">▶</span>
+                </a>
+
+                <a class="ct-card clip-pick" href="#" data-clip="media/kavkaz.mp4" data-name="Кавказ стайл">
+                    <span class="ct-mark"></span>
+                    <span class="ct-text">
+                        <span class="ct-name">Кавказ стайл</span>
+                        <span class="ct-sub">клип · играет по кругу</span>
+                    </span>
+                    <span class="ct-arrow">▶</span>
+                </a>
+
+                <a class="ct-card clip-pick" href="#" data-clip="media/zoomertheme.mp4" data-name="Зумерская тема">
+                    <span class="ct-mark"></span>
+                    <span class="ct-text">
+                        <span class="ct-name">Зумерская тема</span>
+                        <span class="ct-sub">клип · играет по кругу</span>
+                    </span>
+                    <span class="ct-arrow">▶</span>
+                </a>
+
+                <a class="ct-card clip-pick" href="#" data-clip="media/dlavovy.mp4" data-name="Для легенд">
+                    <span class="ct-mark"></span>
+                    <span class="ct-text">
+                        <span class="ct-name">Для легенд</span>
+                        <span class="ct-sub">клип · играет по кругу</span>
+                    </span>
+                    <span class="ct-arrow">▶</span>
+                </a>
+            </div>
+
+            <p class="ct-hint">// клик — открыть клип в отдельном окне · Esc — назад к сайту</p>
+
+            <div class="bio-foot">
+                <div class="ct-note">клипы не меняют фон — просто открываются поверх сайта</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.js"></script>
+    <script src="js/jquery_cookie.js"></script>
+    <script src="js/typed.js"></script>
+    <script src="js/ok.js"></script>
+    <script src="js/bg-anim.js"></script>
+    <script src="js/bg-graph.js"></script>
+    <script src="js/start-screen.js"></script>
+    <script>
+        $(document).ready(function() {
+            var bgBtn = document.getElementById('bgToggleBtn');
+            var videoEl = document.getElementById('background');
+            var startThing = document.getElementById('startThing');
+
+            /* ---------- «Стандартный» фон: чёрный экран с анимацией ---------- */
+            var bgCanvas = document.getElementById('bgCanvas');
+            var bgGraphCanvas = document.getElementById('bgGraph');
+            var bgAnim = null;
+            var bgGraph = null;
+            var bgKind = 'video';
+
+            function readCookie(name) {
+                var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+                return m ? decodeURIComponent(m[1]) : null;
+            }
+
+            function writeCookie(name, value) {
+                try {
+                    document.cookie = name + '=' + encodeURIComponent(value) + ';path=/;max-age=31536000';
+                } catch (e) {}
+            }
+
+            function getBgAnim() {
+                if (!bgAnim && bgCanvas && window.PivoBg) {
+                    bgAnim = window.PivoBg.create(bgCanvas);
+                    if (bgAnim) bgAnim.resize();
+                }
+                return bgAnim;
+            }
+
+            /* радиальный граф в центре экрана */
+            function getBgGraph() {
+                if (!bgGraph && bgGraphCanvas && window.PivoGraph) {
+                    bgGraph = window.PivoGraph.create(bgGraphCanvas, { dim: 0.72 });
+                    if (bgGraph) bgGraph.resize();
+                }
+                return bgGraph;
+            }
+
+            function setActiveBgItem(value) {
+                void value;
+            }
+
+            function standardOn() {
+                var anim = getBgAnim();
+                var graph = getBgGraph();
+                if (!anim || !bgCanvas) return;
+                bgKind = 'standard';
+                bgCanvas.classList.add('is-on');
+                anim.resize();
+                anim.start();
+                if (graph) {
+                    graph.resize();
+                    graph.start();
+                }
+                app.currentBg = 'Стандартный';
+                if (videoEl) videoEl.muted = true;
+                writeCookie('bgKind', 'standard');
+            }
+
+            function standardOff() {
+                if (!bgCanvas) return;
+                bgCanvas.classList.remove('is-on');
+                if (bgAnim) bgAnim.stop();
+                if (bgGraph) bgGraph.stop();
+                if (videoEl) videoEl.muted = false;
+                if (bgKind === 'standard') {
+                    bgKind = 'video';
+                    writeCookie('bgKind', 'video');
+                }
+            }
+
+            /* ---------- ореол вокруг курсора ---------- */
+            var bgHalo = document.getElementById('bgHalo');
+            var haloX = -500;
+            var haloY = -500;
+            var haloFrame = null;
+
+            function moveHalo() {
+                haloFrame = null;
+                if (!bgHalo) return;
+                bgHalo.style.transform = 'translate3d(' + Math.round(haloX - 210) + 'px,' + Math.round(haloY - 210) + 'px,0)';
+            }
+
+            /* мышь для анимаций с курсором (созвездие / граф) */
+            window.addEventListener('mousemove', function(e) {
+                if (bgCanvas && bgCanvas.classList.contains('is-on')) {
+                    if (bgAnim) bgAnim.pointer(e.clientX, e.clientY);
+                    if (bgGraph) bgGraph.pointer(e.clientX, e.clientY);
+                }
+                if (bgHalo && bgCanvas && bgCanvas.classList.contains('is-on') && !haloFrame) {
+                    haloX = e.clientX;
+                    haloY = e.clientY;
+                    haloFrame = requestAnimationFrame(moveHalo);
+                }
+            });
+
+            window.addEventListener('mouseout', function() {
+                if (bgAnim) bgAnim.pointerOut();
+                if (bgGraph) bgGraph.pointerOut();
+            });
+
+            var siteStarted = false;
+
+            function showButtons() {
+                if (siteStarted) return;
+                siteStarted = true;
+            }
+
+            function startSite() {
+                if (siteStarted) return;
+
+                if (bgKind === 'standard') {
+                    var anim = getBgAnim();
+                    var graph = getBgGraph();
+                    if (anim) {
+                        anim.resize();
+                        anim.start();
+                    }
+                    if (graph) {
+                        graph.resize();
+                        graph.start();
+                    }
+                }
+
+                setTimeout(showButtons, 2000);
+            }
+
+            startThing.addEventListener('click', function(e) {
+                e.preventDefault();
+                startSite();
+            });
+
+            /* ---------- Клипы: окно просмотра ---------- */
+            var clipOverlay = document.getElementById('clipOverlay');
+            var clipVideo = document.getElementById('clipVideo');
+            var clipTitle = document.getElementById('clipTitle');
+            var clipClose = document.getElementById('clipClose');
+            var clipHideTimeout = null;
+            var clipIsHiding = false;
+
+            function applyVolumeToClip() {
+                if (!clipVideo) return;
+                clipVideo.volume = app.musicVolume;
+                clipVideo.muted = app.musicVolume <= 0;
+                if (typeof cpPaintState === 'function') cpPaintState();
+            }
+
+            function openClip(src, name) {
+                if (!clipOverlay || !clipVideo || !src) return;
+
+                if (clipHideTimeout) {
+                    clearTimeout(clipHideTimeout);
+                    clipHideTimeout = null;
+                }
+
+                if (name && clipTitle) clipTitle.textContent = name;
+
+                if (clipVideo.getAttribute('src') !== src) {
+                    clipVideo.setAttribute('src', src);
+                    try { clipVideo.load(); } catch (err) {}
+                    if (typeof cpPaintProgress === 'function') cpPaintProgress();
+                }
+
+                applyVolumeToClip();
+                if (typeof cpWake === 'function') cpWake();
+
+                closeBioInstant();
+                closeContactsInstant();
+                closePortfolioInstant();
+
+                clipOverlay.classList.remove('hiding');
+                clipOverlay.classList.add('show');
+                clipIsHiding = false;
+
+                var playing = clipVideo.play();
+                if (playing && playing.catch) {
+                    playing.catch(function() {
+                        // если браузер не дал автозапуск со звуком — стартуем без звука
+                        clipVideo.muted = true;
+                        var again = clipVideo.play();
+                        if (again && again.catch) again.catch(function() {});
+                    });
+                }
+            }
+
+            function closeClip(e) {
+                if (e) e.preventDefault();
+                if (!clipOverlay || !clipOverlay.classList.contains('show') || clipIsHiding) return;
+                clipIsHiding = true;
+                clipOverlay.classList.add('hiding');
+                if (clipVideo) {
+                    try { clipVideo.pause(); } catch (err) {}
+                }
+                clipHideTimeout = setTimeout(function() {
+                    clipOverlay.classList.remove('show', 'hiding');
+                    clipIsHiding = false;
+                    clipHideTimeout = null;
+                }, 250);
+            }
+
+            if (clipClose) clipClose.addEventListener('click', closeClip);
+
+            // Клик по тёмному фону закрывает окно клипа
+            if (clipOverlay) {
+                clipOverlay.addEventListener('click', function(e) {
+                    if (e.target === clipOverlay) closeClip(e);
+                });
+            }
+
+            // Escape закрывает окно клипа (в полном экране — сначала выходит из него)
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && clipOverlay && clipOverlay.classList.contains('show')) {
+                    var fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+                    if (fsEl) return;
+                    closeClip(e);
+                }
+            });
+
+            /* ---------- кастомный плеер клипа ---------- */
+            var clipPlayer = document.getElementById('clipPlayer');
+            var cpPlay = document.getElementById('cpPlay');
+            var cpTrack = document.getElementById('cpTrack');
+            var cpFill = document.getElementById('cpFill');
+            var cpTime = document.getElementById('cpTime');
+            var cpTotal = document.getElementById('cpTotal');
+            var cpMute = document.getElementById('cpMute');
+            var cpFs = document.getElementById('cpFs');
+            var cpIdleTimer = null;
+            var cpDragging = false;
+
+            function cpFormat(sec) {
+                if (!isFinite(sec) || sec < 0) sec = 0;
+                var m = Math.floor(sec / 60);
+                var s = Math.floor(sec % 60);
+                return m + ':' + (s < 10 ? '0' : '') + s;
+            }
+
+            function cpPaintProgress() {
+                if (!clipVideo) return;
+                var d = clipVideo.duration;
+                var p = (isFinite(d) && d > 0) ? (clipVideo.currentTime / d) : 0;
+                if (cpFill) cpFill.style.width = (p * 100).toFixed(3) + '%';
+                if (cpTime) cpTime.textContent = cpFormat(clipVideo.currentTime);
+                if (cpTotal) cpTotal.textContent = cpFormat(d);
+            }
+
+            function cpPaintState() {
+                if (!clipPlayer || !clipVideo) return;
+                clipPlayer.classList.toggle('is-playing', !clipVideo.paused);
+                clipPlayer.classList.toggle('is-muted', !!(clipVideo.muted || clipVideo.volume === 0));
+            }
+
+            function cpWake() {
+                if (!clipPlayer) return;
+                clipPlayer.classList.remove('is-idle');
+                if (cpIdleTimer) clearTimeout(cpIdleTimer);
+                cpIdleTimer = setTimeout(function() {
+                    cpIdleTimer = null;
+                    if (clipVideo && !clipVideo.paused) clipPlayer.classList.add('is-idle');
+                }, 2600);
+            }
+
+            function cpToggle() {
+                if (!clipVideo) return;
+                if (clipVideo.paused) {
+                    var p = clipVideo.play();
+                    if (p && p.catch) p.catch(function() {});
+                } else {
+                    clipVideo.pause();
+                }
+                cpWake();
+            }
+
+            function cpSeekFrom(clientX) {
+                if (!clipVideo || !cpTrack) return;
+                var r = cpTrack.getBoundingClientRect();
+                if (!r.width) return;
+                var p = (clientX - r.left) / r.width;
+                p = Math.max(0, Math.min(1, p));
+                var d = clipVideo.duration;
+                if (isFinite(d) && d > 0) clipVideo.currentTime = p * d;
+                if (cpFill) cpFill.style.width = (p * 100).toFixed(3) + '%';
+                if (cpTime) cpTime.textContent = cpFormat(isFinite(d) && d > 0 ? p * d : 0);
+            }
+
+            function cpToggleMute() {
+                if (!clipVideo) return;
+                clipVideo.muted = !clipVideo.muted;
+                if (!clipVideo.muted && clipVideo.volume === 0) {
+                    clipVideo.volume = app.musicVolume > 0 ? app.musicVolume : 0.15;
+                }
+                cpPaintState();
+            }
+
+            function cpFullscreen() {
+                if (!clipPlayer) return;
+                var fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+                if (fsEl) {
+                    if (document.exitFullscreen) document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                } else if (clipPlayer.requestFullscreen) {
+                    var rq = clipPlayer.requestFullscreen();
+                    if (rq && rq.catch) rq.catch(function() {});
+                } else if (clipPlayer.webkitRequestFullscreen) {
+                    clipPlayer.webkitRequestFullscreen();
+                } else if (clipVideo && clipVideo.webkitEnterFullscreen) {
+                    // iOS Safari: полноэкранный режим только у самого видео
+                    clipVideo.webkitEnterFullscreen();
+                }
+            }
+
+            if (cpPlay) cpPlay.addEventListener('click', function(e) { e.preventDefault(); cpToggle(); });
+            if (cpMute) cpMute.addEventListener('click', function(e) { e.preventDefault(); cpToggleMute(); });
+            if (cpFs) cpFs.addEventListener('click', function(e) { e.preventDefault(); cpFullscreen(); });
+            if (clipVideo) clipVideo.addEventListener('click', function() { cpToggle(); });
+
+            if (cpTrack) {
+                cpTrack.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    cpDragging = true;
+                    cpSeekFrom(e.clientX);
+                });
+                cpTrack.addEventListener('touchstart', function(e) {
+                    cpDragging = true;
+                    if (e.touches[0]) cpSeekFrom(e.touches[0].clientX);
+                }, { passive: true });
+            }
+            document.addEventListener('mousemove', function(e) {
+                if (cpDragging) cpSeekFrom(e.clientX);
+            });
+            document.addEventListener('mouseup', function() { cpDragging = false; });
+            document.addEventListener('touchmove', function(e) {
+                if (cpDragging && e.touches[0]) cpSeekFrom(e.touches[0].clientX);
+            }, { passive: true });
+            document.addEventListener('touchend', function() { cpDragging = false; });
+
+            if (clipPlayer) {
+                clipPlayer.addEventListener('mouseenter', cpWake);
+                clipPlayer.addEventListener('mousemove', cpWake);
+            }
+
+            if (clipVideo) {
+                clipVideo.addEventListener('loadedmetadata', cpPaintProgress);
+                clipVideo.addEventListener('durationchange', cpPaintProgress);
+                clipVideo.addEventListener('timeupdate', function() {
+                    if (!cpDragging) cpPaintProgress();
+                });
+                clipVideo.addEventListener('play', function() { cpPaintState(); cpWake(); });
+                clipVideo.addEventListener('pause', function() {
+                    cpPaintState();
+                    if (clipPlayer) clipPlayer.classList.remove('is-idle');
+                });
+            }
+
+            // горячие клавиши, пока окно клипа открыто
+            document.addEventListener('keydown', function(e) {
+                if (!clipOverlay || !clipOverlay.classList.contains('show')) return;
+                var tag = (e.target && e.target.tagName) || '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+                var k = e.key;
+                if (k === ' ' || k === 'Spacebar' || k === 'k' || k === 'K') {
+                    e.preventDefault();
+                    cpToggle();
+                } else if (k === 'ArrowRight') {
+                    e.preventDefault();
+                    if (clipVideo) clipVideo.currentTime = Math.min(clipVideo.duration || 0, clipVideo.currentTime + 5);
+                    cpWake();
+                } else if (k === 'ArrowLeft') {
+                    e.preventDefault();
+                    if (clipVideo) clipVideo.currentTime = Math.max(0, clipVideo.currentTime - 5);
+                    cpWake();
+                } else if (k === 'm' || k === 'M' || k === 'ь' || k === 'Ь') {
+                    e.preventDefault();
+                    cpToggleMute();
+                } else if (k === 'f' || k === 'F' || k === 'а' || k === 'А') {
+                    e.preventDefault();
+                    cpFullscreen();
+                }
+            });
+
+            /* ---------- заголовок «Developer!»: буквы + вход ---------- */
+            var helloEl = document.getElementById('hello');
+            if (helloEl) {
+                var helloText = helloEl.textContent.trim();
+                helloEl.setAttribute('aria-label', helloText);
+                helloEl.setAttribute('data-text', helloText);
+                helloEl.textContent = '';
+
+                helloText.split('').forEach(function(ch, i) {
+                    var sp = document.createElement('span');
+                    sp.className = 'hl' + (/[!?]/.test(ch) ? ' hl-accent' : '');
+                    sp.style.setProperty('--i', i);
+                    sp.textContent = ch === ' ' ? '\u00A0' : ch;
+                    helloEl.appendChild(sp);
+                });
+
+                // запускаем вход, когда стартовый экран ушёл
+                var helloTick = setInterval(function() {
+                    if (!document.getElementById('startThing') && !helloEl.classList.contains('is-in')) {
+                        helloEl.classList.add('is-in');
+                        setTimeout(function() {
+                            helloEl.classList.add('is-shine');
+                        }, 1500);
+                        clearInterval(helloTick);
+                    }
+                }, 150);
+            }
+
+            // === Услуги — модальное окно ===
+            var servicesTab = document.getElementById('servicesTab');
+            var servicesOverlay = document.getElementById('servicesOverlay');
+            var servicesClose = document.getElementById('servicesClose');
+            var servicesCta = document.getElementById('servicesCta');
+            var servicesHideTimeout = null;
+            var servicesIsHiding = false;
+
+            function closeServicesInstant() {
+                if (!servicesOverlay) return;
+                if (servicesHideTimeout) {
+                    clearTimeout(servicesHideTimeout);
+                    servicesHideTimeout = null;
+                }
+                servicesOverlay.classList.remove('show', 'hiding');
+                servicesIsHiding = false;
+                if (servicesTab) servicesTab.classList.remove('active');
+            }
+
+            function openServices(e) {
+                if (e) e.preventDefault();
+                if (!servicesOverlay) return;
+                if (servicesHideTimeout) {
+                    clearTimeout(servicesHideTimeout);
+                    servicesHideTimeout = null;
+                }
+                servicesOverlay.classList.remove('hiding');
+                servicesOverlay.classList.add('show');
+                servicesIsHiding = false;
+                if (servicesTab) servicesTab.classList.add('active');
+                closeBioInstant();
+                closeContactsInstant();
+                closePortfolioInstant();
+                closeClipsInstant();
+            }
+
+            function closeServices(e) {
+                if (e) e.preventDefault();
+                if (!servicesOverlay || !servicesOverlay.classList.contains('show') || servicesIsHiding) return;
+                servicesIsHiding = true;
+                servicesOverlay.classList.add('hiding');
+                if (servicesTab) servicesTab.classList.remove('active');
+                servicesHideTimeout = setTimeout(function() {
+                    servicesOverlay.classList.remove('show', 'hiding');
+                    servicesIsHiding = false;
+                    servicesHideTimeout = null;
+                }, 250);
+            }
+
+            if (servicesTab) servicesTab.addEventListener('click', openServices);
+            if (servicesClose) servicesClose.addEventListener('click', closeServices);
+
+            // «обсудить задачу» → сразу в контакты
+            if (servicesCta) {
+                servicesCta.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    closeServicesInstant();
+                    openContacts(e);
+                });
+            }
+
+            if (servicesOverlay) {
+                servicesOverlay.addEventListener('click', function(e) {
+                    if (e.target === servicesOverlay) closeServices(e);
+                });
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key !== 'Escape') return;
+                if (!servicesOverlay || !servicesOverlay.classList.contains('show') || servicesIsHiding) return;
+                if (document.fullscreenElement || document.webkitFullscreenElement) return;
+                if (clipOverlay && clipOverlay.classList.contains('show')) return;
+                closeServices(e);
+            });
+
+            // === Клипы — модальное окно выбора ===
+            var clipsOverlay = document.getElementById('clipsOverlay');
+            var clipsClose = document.getElementById('clipsClose');
+            var clipsHideTimeout = null;
+            var clipsIsHiding = false;
+
+            function closeClipsInstant() {
+                if (!clipsOverlay) return;
+                if (clipsHideTimeout) {
+                    clearTimeout(clipsHideTimeout);
+                    clipsHideTimeout = null;
+                }
+                clipsOverlay.classList.remove('show', 'hiding');
+                clipsIsHiding = false;
+                if (bgBtn) bgBtn.classList.remove('active');
+            }
+
+            function openClips(e) {
+                if (e) e.preventDefault();
+                if (!clipsOverlay) return;
+                if (clipsHideTimeout) {
+                    clearTimeout(clipsHideTimeout);
+                    clipsHideTimeout = null;
+                }
+                clipsOverlay.classList.remove('hiding');
+                clipsOverlay.classList.add('show');
+                clipsIsHiding = false;
+                if (bgBtn) bgBtn.classList.add('active');
+                closeBioInstant();
+                closeContactsInstant();
+                closePortfolioInstant();
+                closeServicesInstant();
+            }
+
+            function closeClips(e) {
+                if (e) e.preventDefault();
+                if (!clipsOverlay || !clipsOverlay.classList.contains('show') || clipsIsHiding) return;
+                clipsIsHiding = true;
+                clipsOverlay.classList.add('hiding');
+                if (bgBtn) bgBtn.classList.remove('active');
+                clipsHideTimeout = setTimeout(function() {
+                    clipsOverlay.classList.remove('show', 'hiding');
+                    clipsIsHiding = false;
+                    clipsHideTimeout = null;
+                }, 250);
+            }
+
+            if (bgBtn) {
+                bgBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (clipsOverlay && clipsOverlay.classList.contains('show')) {
+                        closeClips(e);
+                    } else {
+                        openClips(e);
+                    }
+                });
+            }
+
+            if (clipsClose) clipsClose.addEventListener('click', closeClips);
+
+            // клик по тёмному фону закрывает окно
+            if (clipsOverlay) {
+                clipsOverlay.addEventListener('click', function(e) {
+                    if (e.target === clipsOverlay) closeClips(e);
+                });
+            }
+
+            // Escape закрывает окно (если сверху не открыт клип)
+            document.addEventListener('keydown', function(e) {
+                if (e.key !== 'Escape') return;
+                if (!clipsOverlay || !clipsOverlay.classList.contains('show') || clipsIsHiding) return;
+                if (document.fullscreenElement || document.webkitFullscreenElement) return;
+                if (clipOverlay && clipOverlay.classList.contains('show')) return;
+                closeClips(e);
+            });
+
+            // выбор клипа в окне
+            document.querySelectorAll('.clip-pick').forEach(function(card) {
+                card.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openClip(this.dataset.clip, this.dataset.name);
+                });
+            });
+
+            if (videoEl) {
+                videoEl.volume = app.musicVolume;
+            }
+
+            // громкость берём из cookie (ползунок убран, значение по умолчанию 15%)
+            var savedVolume = $.cookie('musicVolume');
+            if (savedVolume !== undefined) {
+                var vol = parseFloat(savedVolume);
+                if (!isNaN(vol) && vol >= 0 && vol <= 1) {
+                    app.musicVolume = vol;
+                    if (videoEl) {
+                        videoEl.volume = vol;
+                    }
+                }
+            }
+
+
+
+            /* ---------- фон всегда «Стандартный»: клипы больше не фоны ---------- */
+            (function applyStoredBg() {
+                var stored = readCookie('bgKind');
+
+                // след от прошлых версий: если в cookie остался клип — возвращаем стандартный фон
+                if (stored && stored.indexOf('media/') === 0) {
+                    writeCookie('bgKind', 'standard');
+                    writeCookie('bgName', 'Стандартный');
+                }
+
+                app.currentBg = 'Стандартный';
+                bgKind = 'standard';
+                if (bgCanvas) bgCanvas.classList.add('is-on');
+                setActiveBgItem('standard');
+                getBgAnim();
+                getBgGraph();
+                if (videoEl) {
+                    videoEl.muted = true;
+                    videoEl.style.opacity = '0';
+                    videoEl.addEventListener('playing', function() {
+                        if (bgKind === 'standard') {
+                            try { videoEl.pause(); } catch (err) {}
+                        }
+                    });
+                }
+            })();
+
+            // === BIO модальное окно ===
+            var bioTab = document.getElementById('bioTab');
+            var bioOverlay = document.getElementById('bioOverlay');
+            var bioClose = document.getElementById('bioClose');
+            var bioHideTimeout = null;
+            var bioIsHiding = false;
+
+            function openBio(e) {
+                if (e) e.preventDefault();
+                if (bioHideTimeout) {
+                    clearTimeout(bioHideTimeout);
+                    bioHideTimeout = null;
+                }
+                bioOverlay.classList.remove('hiding');
+                bioOverlay.classList.add('show');
+                bioIsHiding = false;
+                bioTab.classList.add('active');
+                closeContactsInstant();
+                closePortfolioInstant();
+            }
+
+            function closeBio(e) {
+                if (e) e.preventDefault();
+                if (!bioOverlay.classList.contains('show') || bioIsHiding) return;
+                bioIsHiding = true;
+                bioOverlay.classList.add('hiding');
+                bioTab.classList.remove('active');
+                bioHideTimeout = setTimeout(function() {
+                    bioOverlay.classList.remove('show', 'hiding');
+                    bioIsHiding = false;
+                    bioHideTimeout = null;
+                }, 250);
+            }
+
+            if (bioTab) bioTab.addEventListener('click', openBio);
+            if (bioClose) bioClose.addEventListener('click', closeBio);
+
+            // Клик по тёмному фону закрывает окно
+            if (bioOverlay) {
+                bioOverlay.addEventListener('click', function(e) {
+                    if (e.target === bioOverlay) closeBio(e);
+                });
+            }
+
+            // Escape закрывает окно
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && bioOverlay && bioOverlay.classList.contains('show')) {
+                    closeBio(e);
+                }
+            });
+
+            // === Контакты — модальное окно с графом связей ===
+            var contactsTab = document.getElementById('contactsTab');
+            var contactsOverlay = document.getElementById('contactsOverlay');
+            var contactsClose = document.getElementById('contactsClose');
+            var contactsHideTimeout = null;
+            var contactsIsHiding = false;
+
+            function closeBioInstant() {
+                if (!bioOverlay) return;
+                if (bioHideTimeout) {
+                    clearTimeout(bioHideTimeout);
+                    bioHideTimeout = null;
+                }
+                bioOverlay.classList.remove('show', 'hiding');
+                bioIsHiding = false;
+                if (bioTab) bioTab.classList.remove('active');
+            }
+
+            function closeContactsInstant() {
+                if (!contactsOverlay) return;
+                if (contactsHideTimeout) {
+                    clearTimeout(contactsHideTimeout);
+                    contactsHideTimeout = null;
+                }
+                contactsOverlay.classList.remove('show', 'hiding');
+                contactsIsHiding = false;
+                if (contactsTab) contactsTab.classList.remove('active');
+            }
+
+            function openContacts(e) {
+                if (e) e.preventDefault();
+                if (contactsHideTimeout) {
+                    clearTimeout(contactsHideTimeout);
+                    contactsHideTimeout = null;
+                }
+                closeBioInstant();
+                contactsOverlay.classList.remove('hiding');
+                contactsOverlay.classList.add('show');
+                contactsIsHiding = false;
+                contactsTab.classList.add('active');
+                closePortfolioInstant();
+            }
+
+            function closeContacts(e) {
+                if (e) e.preventDefault();
+                if (!contactsOverlay.classList.contains('show') || contactsIsHiding) return;
+                contactsIsHiding = true;
+                contactsOverlay.classList.add('hiding');
+                contactsTab.classList.remove('active');
+                contactsHideTimeout = setTimeout(function() {
+                    contactsOverlay.classList.remove('show', 'hiding');
+                    contactsIsHiding = false;
+                    contactsHideTimeout = null;
+                }, 250);
+            }
+
+            if (contactsTab) contactsTab.addEventListener('click', openContacts);
+            if (contactsClose) contactsClose.addEventListener('click', closeContacts);
+
+            // Клик по тёмному фону закрывает граф контактов
+            if (contactsOverlay) {
+                contactsOverlay.addEventListener('click', function(e) {
+                    if (e.target === contactsOverlay) closeContacts(e);
+                });
+            }
+
+            // Escape закрывает граф контактов
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && contactsOverlay && contactsOverlay.classList.contains('show')) {
+                    closeContacts(e);
+                }
+            });
+
+            // === Портфолио — модальное окно с сеткой проектов ===
+            var portfolioTab = document.getElementById('portfolioTab');
+            var portfolioOverlay = document.getElementById('portfolioOverlay');
+            var portfolioClose = document.getElementById('portfolioClose');
+            var portfolioHideTimeout = null;
+            var portfolioIsHiding = false;
+
+            function closePortfolioInstant() {
+                if (!portfolioOverlay) return;
+                if (portfolioHideTimeout) {
+                    clearTimeout(portfolioHideTimeout);
+                    portfolioHideTimeout = null;
+                }
+                portfolioOverlay.classList.remove('show', 'hiding');
+                portfolioIsHiding = false;
+                if (portfolioTab) portfolioTab.classList.remove('active');
+                // закрываем и описание проекта, если оно было открыто
+                if (projectOverlay) {
+                    if (projectHideTimeout) {
+                        clearTimeout(projectHideTimeout);
+                        projectHideTimeout = null;
+                    }
+                    projectOverlay.classList.remove('show', 'hiding');
+                    projectIsHiding = false;
+                }
+            }
+
+            function openPortfolio(e) {
+                if (e) e.preventDefault();
+                if (portfolioHideTimeout) {
+                    clearTimeout(portfolioHideTimeout);
+                    portfolioHideTimeout = null;
+                }
+                closeBioInstant();
+                closeContactsInstant();
+                portfolioOverlay.classList.remove('hiding');
+                portfolioOverlay.classList.add('show');
+                portfolioIsHiding = false;
+                portfolioTab.classList.add('active');
+            }
+
+            function closePortfolio(e) {
+                if (e) e.preventDefault();
+                if (!portfolioOverlay.classList.contains('show') || portfolioIsHiding) return;
+                portfolioIsHiding = true;
+                portfolioOverlay.classList.add('hiding');
+                portfolioTab.classList.remove('active');
+                portfolioHideTimeout = setTimeout(function() {
+                    portfolioOverlay.classList.remove('show', 'hiding');
+                    portfolioIsHiding = false;
+                    portfolioHideTimeout = null;
+                }, 250);
+            }
+
+            if (portfolioTab) portfolioTab.addEventListener('click', openPortfolio);
+            if (portfolioClose) portfolioClose.addEventListener('click', closePortfolio);
+
+            if (portfolioOverlay) {
+                portfolioOverlay.addEventListener('click', function(e) {
+                    if (e.target === portfolioOverlay) closePortfolio(e);
+                });
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key !== 'Escape' || !portfolioOverlay || !portfolioOverlay.classList.contains('show')) return;
+                // если открыто описание проекта — Escape закрывает сначала его
+                if (projectOverlay && projectOverlay.classList.contains('show')) return;
+                closePortfolio(e);
+            });
+
+            // === Фильтры и клики по карточкам портфолио ===
+            var pfCards = Array.prototype.slice.call(document.querySelectorAll('.pf-card'));
+            var pfFilters = Array.prototype.slice.call(document.querySelectorAll('.pf-filter'));
+
+            // Содержимое карточек и описаний проектов (черновик — правится здесь)
+            var portfolioData = {
+                'perimetr': {
+                    title: 'Периметр',
+                    badge: 'сайт',
+                    cover: 'pf-cover-web',
+                    mono: 'П',
+                    sub: 'Сайт о цифровой безопасности: интерактивный граф связей, инструменты и анонимность.',
+                    text: [
+                        'Образовательный сайт о цифровой безопасности: разделы про инструменты и анонимность, чек-листы и интерактивный граф связей на canvas.',
+                        'В проекте я тимлид: держу на себе команду, задачи и движение вперёд — чтобы всё шло в одну сторону и доходило до результата.',
+                        'Сам код писал не я: моя зона ответственности — люди, приоритеты и то, чтобы проект выходил в свет.'
+                    ],
+                    tech: ['HTML', 'CSS', 'JS', 'canvas'],
+                    shots: [{ label: 'главная', mock: 'hero' }, { label: 'граф связей', mock: 'graph' }, { label: 'разделы', mock: 'grid' }],
+                    links: [{ label: 'открыть сайт →', href: 'https://perimetr.perimetr.workers.dev/', ghost: false }],
+                    facts: [{ value: 'тимлид', label: 'роль в проекте' }],
+                    state: 'в работе',
+                    stateClass: 'pf-state-live',
+                    year: '2026'
+                },
+                'pivodeveloper': {
+                    title: 'Сайт-портфолио',
+                    badge: 'сайт',
+                    cover: 'pf-cover-web',
+                    mono: 'P',
+                    sub: 'Личный сайт для знакомства со мной — живёт на pivodeveloper.ru.',
+                    text: [
+                        'Мой личный сайт: стартовый экран «> start <», видео-фон, переключатели фона и громкости, вкладки BIO, Портфолио и Контакты.',
+                        'Внутри — модальные окна с каскадными анимациями, окно-редактор «смыслжизни.bio» и граф связей на canvas, который подсвечивает нить к выбранному контакту.'
+                    ],
+                    tech: ['HTML', 'CSS', 'JS', 'jQuery', 'canvas'],
+                    shots: [{ label: 'стартовый экран', mock: 'start' }, { label: 'BIO', mock: 'bio' }, { label: 'контакты', mock: 'contacts' }],
+                    links: [{ label: 'открыть сайт →', href: 'https://pivodeveloper.ru/', self: true, note: 'Дурак, ты уже на нем' }],
+                    state: 'в работе',
+                    stateClass: 'pf-state-live',
+                    year: '2026'
+                },
+                'moonlight': {
+                    title: 'MoonLight',
+                    badge: 'discord',
+                    cover: 'pf-cover-discord',
+                    mono: 'ML',
+                    sub: 'Discord-сообщество вокруг утилиты для краша серверов — основал и написал техническую часть сам.',
+                    text: [
+                        'Проект 2023 года. Discord-сообщество, выстроенное вокруг утилиты для краша серверов: идея, разработка, оформление и развитие — всё на мне.',
+                        'Утилитой пользовались более 100 активных пользователей — не просто подписчиков, а тех, кто реально ей пользовался.',
+                        'Сейчас проект в прошлом — оставлен как часть пути: своё сообщество, своя аудитория и первый опыт самостоятельного продукта.'
+                    ],
+                    facts: [{ value: '100+', label: 'активных пользователей' }],
+                    tech: ['JavaScript', 'Node.js', 'Discord'],
+                    shots: [{ label: 'сервер', mock: 'discord' }, { label: 'каналы', mock: 'channels' }, { label: 'боты', mock: 'chat' }],
+                    links: [],
+                    state: 'в прошлом',
+                    stateClass: 'pf-state-past',
+                    year: '2023'
+                },
+                'telegram-bots': {
+                    title: 'Telegram-боты',
+                    badge: 'telegram',
+                    cover: 'pf-cover-telegram',
+                    mono: 'TG',
+                    sub: 'Боты на заказ и для портфолио — работаю с ними с 2022 года.',
+                    text: [
+                        'Делаю Telegram-ботов с 2022 года: и в портфолио, и на заказ — от идеи и задачи до готового бота, который работает на сервере.',
+                        'Работаю быстро и качественно: держу связь на всех этапах, объясняю, как всё устроено внутри, и не пропадаю после запуска.',
+                        'Задачи разные — заявки и заказы, рассылки, уведомления, оплата и админ-панель прямо в чате.'
+                    ],
+                    tech: ['Python', 'aiogram', 'API'],
+                    shots: [{ label: 'меню бота', mock: 'chat' }, { label: 'форма заявки', mock: 'form' }, { label: 'админка', mock: 'panel' }],
+                    links: [],
+                    facts: [{ value: '2022–2026', label: 'работаю с ботами' }],
+                    state: 'в работе',
+                    stateClass: 'pf-state-live',
+                    year: '2022–2026'
+                },
+                'discord-bots': {
+                    title: 'Discord-боты',
+                    badge: 'discord',
+                    cover: 'pf-cover-discord',
+                    mono: 'DS',
+                    sub: 'Боты на заказ и для портфолио — работаю с ними с 2020 года.',
+                    text: [
+                        'Делаю Discord-ботов с 2020 года: и в портфолио, и на заказ — от идеи и задачи до готового бота на сервере.',
+                        'Работаю быстро и качественно: держу связь на всех этапах, объясняю, как всё устроено внутри, и не пропадаю после запуска.',
+                        'Задачи разные — модерация и роли, тикеты поддержки, музыка, логи и защита от рейдов.'
+                    ],
+                    tech: ['Python', 'JS', 'API'],
+                    shots: [{ label: 'команды', mock: 'chat' }, { label: 'тикеты', mock: 'discord' }, { label: 'логи', mock: 'log' }],
+                    links: [],
+                    facts: [{ value: '2020–2026', label: 'работаю с ботами' }],
+                    state: 'в работе',
+                    stateClass: 'pf-state-live',
+                    year: '2020–2026'
+                },
+                'landings': {
+                    title: 'Лендинги под ключ',
+                    badge: 'сайт',
+                    cover: 'pf-cover-web',
+                    mono: 'LP',
+                    sub: 'Лендинги на заказ и для портфолио — от структуры до публикации.',
+                    text: [
+                        'Делаю одностраничники под ключ: структура и тексты, дизайн, вёрстка с адаптивом под телефоны, анимации появления блоков и подключение домена.',
+                        'Работаю быстро и качественно: держу связь на всех этапах, показываю промежуточный результат и остаюсь на связи после запуска.',
+                        'На выходе — готовый сайт, который можно сразу заливать на хостинг.'
+                    ],
+                    tech: ['HTML', 'CSS', 'JS'],
+                    shots: [{ label: 'первый экран', mock: 'hero' }, { label: 'блоки', mock: 'grid' }, { label: 'мобильная версия', mock: 'phone' }],
+                    links: [],
+                    facts: [{ value: '2026', label: 'год старта' }],
+                    state: 'в работе',
+                    stateClass: 'pf-state-live',
+                    year: '2026'
+                }
+            };
+
+            // === Описание проекта (второй уровень) ===
+            var projectOverlay = document.getElementById('projectOverlay');
+            var projectClose = document.getElementById('projectClose');
+            var projectBack = document.getElementById('projectBack');
+            var projectHideTimeout = null;
+            var projectIsHiding = false;
+
+            // --- Рисованные мини-скриншоты для галереи проекта ---
+            var MOCK_RGB = {
+                'pf-cover-web': '126, 240, 168',
+                'pf-cover-telegram': '126, 214, 240',
+                'pf-cover-discord': '168, 160, 255'
+            };
+
+            function mockChrome() {
+                return '<span class="mk-chrome"><i></i><i></i><i></i><b></b></span>';
+            }
+
+            // Граф связей: ядро, нити и узлы-плашки вокруг
+            function mockGraph(rgb) {
+                var cx = 127, cy = 76, nodes = '', lines = '';
+                [-90, -30, 30, 90, 150, 210].forEach(function(a, i) {
+                    var rad = a * Math.PI / 180;
+                    var x = cx + Math.cos(rad) * 82;
+                    var y = cy + Math.sin(rad) * 46;
+                    lines += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) +
+                        '" stroke="rgba(' + rgb + ', ' + (i % 2 === 0 ? 0.34 : 0.15) + ')" stroke-width="0.8"/>';
+                    nodes += '<rect x="' + (x - 18).toFixed(1) + '" y="' + (y - 7).toFixed(1) +
+                        '" width="36" height="14" rx="7" fill="rgba(255,255,255,0.045)" stroke="rgba(255,255,255,0.15)" stroke-width="0.7"/>' +
+                        '<rect x="' + (x - 9).toFixed(1) + '" y="' + (y - 1.5).toFixed(1) +
+                        '" width="18" height="3" rx="1.5" fill="rgba(255,255,255,0.22)"/>';
+                });
+                return '<svg class="mk-svg" viewBox="0 0 254 152" xmlns="http://www.w3.org/2000/svg">' + lines + nodes +
+                    '<circle cx="' + cx + '" cy="' + cy + '" r="18" fill="rgba(' + rgb + ', 0.1)"/>' +
+                    '<circle cx="' + cx + '" cy="' + cy + '" r="9" fill="rgba(' + rgb + ', 0.16)" stroke="rgba(' + rgb + ', 0.5)" stroke-width="0.8"/>' +
+                    '<circle cx="' + cx + '" cy="' + cy + '" r="3.4" fill="rgba(' + rgb + ', 0.95)"/></svg>';
+            }
+
+            // Граф контактов: центральный узел и три плашки-контакта
+            function mockContacts(rgb) {
+                var cx = 125, cy = 78, spots = [[125, 22], [58, 116], [192, 116]], chips = '', lines = '';
+                spots.forEach(function(p, i) {
+                    lines += '<line x1="' + cx + '" y1="' + cy + '" x2="' + p[0] + '" y2="' + p[1] +
+                        '" stroke="rgba(' + rgb + ', ' + (i === 0 ? 0.42 : 0.2) + ')" stroke-width="0.8"/>';
+                    chips += '<rect x="' + (p[0] - 26) + '" y="' + (p[1] - 9) + '" width="52" height="18" rx="9" ' +
+                        'fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.16)" stroke-width="0.7"/>' +
+                        '<rect x="' + (p[0] - 15) + '" y="' + (p[1] - 3.5) + '" width="30" height="4" rx="2" fill="rgba(255,255,255,0.25)"/>';
+                });
+                return '<svg class="mk-svg" viewBox="0 0 250 152" xmlns="http://www.w3.org/2000/svg">' + lines + chips +
+                    '<circle cx="125" cy="78" r="24" fill="rgba(255,255,255,0.035)" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>' +
+                    '<circle cx="125" cy="78" r="13" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.18)" stroke-width="0.8"/>' +
+                    '<circle cx="125" cy="78" r="4.4" fill="rgba(' + rgb + ', 0.95)"/></svg>';
+            }
+
+            // Схематичные интерфейсы: браузер, чат, панель, логи, телефон
+            function mockDom(kind) {
+                switch (kind) {
+                    case 'hero':
+                        return mockChrome() + '<span class="mk-body">' +
+                            '<span class="mk-nav"><i></i><i></i><i></i></span>' +
+                            '<span class="mk-h1"></span><span class="mk-h1 mk-s"></span>' +
+                            '<span class="mk-pill mk-accent"></span>' +
+                            '<span class="mk-row"><i></i><i></i><i></i></span></span>';
+                    case 'grid':
+                        return mockChrome() + '<span class="mk-body">' +
+                            '<span class="mk-sec"></span>' +
+                            '<span class="mk-grid6"><i></i><i></i><i></i><i></i><i></i><i></i></span></span>';
+                    case 'start':
+                        return '<span class="mk-start"><b>&gt; start &lt;</b><i></i></span>';
+                    case 'bio':
+                        return mockChrome() + '<span class="mk-body">' +
+                            '<span class="mk-headrow"><i class="mk-ava"></i><span class="mk-stack"><i></i><i class="mk-s"></i></span></span>' +
+                            '<span class="mk-text"><i></i><i></i><i class="mk-s"></i></span>' +
+                            '<span class="mk-chips"><i></i><i></i><i></i></span></span>';
+                    case 'discord':
+                        return '<span class="mk-rail"><i></i><i></i><i></i><i></i><i></i></span>' +
+                            '<span class="mk-side"><i></i><i></i><i></i><i></i></span>' +
+                            '<span class="mk-chat">' +
+                            '<span class="mk-msg"><i class="mk-ava"></i><span class="mk-stack"><i></i><i class="mk-s"></i></span></span>' +
+                            '<span class="mk-msg"><i class="mk-ava"></i><span class="mk-stack"><i></i><i class="mk-s"></i></span></span>' +
+                            '<span class="mk-embed"></span></span>';
+                    case 'channels':
+                        return '<span class="mk-rail"><i></i><i></i><i></i><i></i><i></i></span>' +
+                            '<span class="mk-side mk-wide"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>';
+                    case 'chat':
+                        return '<span class="mk-bubbles">' +
+                            '<span class="mk-bubble mk-in"></span>' +
+                            '<span class="mk-bubble mk-out"></span>' +
+                            '<span class="mk-bubble mk-in mk-w2"></span></span>' +
+                            '<span class="mk-keys"><i></i><i></i><i></i></span>';
+                    case 'form':
+                        return mockChrome() + '<span class="mk-body">' +
+                            '<span class="mk-sec"></span>' +
+                            '<span class="mk-fields"><i></i><i></i><i></i></span>' +
+                            '<span class="mk-pill mk-accent"></span></span>';
+                    case 'panel':
+                        return mockChrome() + '<span class="mk-body">' +
+                            '<span class="mk-stats"><i></i><i></i><i></i></span>' +
+                            '<span class="mk-table"><i></i><i></i><i></i><i></i></span></span>';
+                    case 'log':
+                        return mockChrome() + '<span class="mk-body">' +
+                            '<span class="mk-log"><i class="ok"></i><i></i><i class="warn"></i><i></i><i class="ok"></i><i class="err"></i></span></span>';
+                    case 'phone':
+                        return '<span class="mk-phonewrap"><span class="mk-phone"><i class="mk-notch"></i>' +
+                            '<i class="mk-h1"></i><i class="mk-h1 mk-s"></i><i class="mk-pill mk-accent"></i>' +
+                            '<span class="mk-cards3"><i></i><i></i></span></span></span>';
+                }
+                return '';
+            }
+
+            function renderProjectShots(list, cover) {
+                var gallery = document.getElementById('pjGallery');
+                if (!gallery) return;
+                gallery.innerHTML = '';
+                var rgb = MOCK_RGB[cover] || '255, 255, 255';
+                (list || []).forEach(function(item, i) {
+                    var label = typeof item === 'string' ? item : (item.label || '');
+                    var src = typeof item === 'string' ? '' : (item.src || '');
+                    var kind = typeof item === 'string' ? '' : (item.mock || '');
+                    var tile = document.createElement('div');
+                    tile.className = 'pj-shot ' + cover;
+                    if (src) {
+                        var img = document.createElement('img');
+                        img.src = src;
+                        img.alt = label;
+                        tile.className += ' has-img';
+                        tile.appendChild(img);
+                    } else if (kind === 'graph') {
+                        tile.innerHTML = mockGraph(rgb);
+                    } else if (kind === 'contacts') {
+                        tile.innerHTML = mockContacts(rgb);
+                    } else {
+                        tile.innerHTML = '<span class="mk">' + mockDom(kind) + '</span>';
+                    }
+                    if (label) {
+                        var lb = document.createElement('span');
+                        lb.className = 'pj-shot-label';
+                        lb.textContent = label;
+                        tile.appendChild(lb);
+                    }
+                    tile.style.animationDelay = (0.16 + i * 0.07) + 's';
+                    gallery.appendChild(tile);
+                });
+            }
+
+            function openProject(id) {
+                var d = portfolioData[id];
+                if (!d || !projectOverlay) return;
+
+                var setText = function(elId, value) {
+                    var el = document.getElementById(elId);
+                    if (el) el.textContent = value || '';
+                };
+                setText('pjTitle', d.title);
+                setText('pjSub', d.sub);
+                setText('pjBadge', d.badge);
+
+                var tech = document.getElementById('pjTech');
+                if (tech) {
+                    tech.innerHTML = '';
+                    (d.tech || []).forEach(function(t) {
+                        var s = document.createElement('span');
+                        s.textContent = t;
+                        tech.appendChild(s);
+                    });
+                }
+
+                var facts = document.getElementById('pjFacts');
+                if (facts) {
+                    facts.innerHTML = '';
+                    facts.style.setProperty('--mk', MOCK_RGB[d.cover] || '255, 255, 255');
+                    (d.facts || []).forEach(function(f) {
+                        var el = document.createElement('span');
+                        el.className = 'pj-fact';
+                        var b = document.createElement('b');
+                        b.textContent = f.value;
+                        var s = document.createElement('span');
+                        s.textContent = f.label;
+                        el.appendChild(b);
+                        el.appendChild(s);
+                        facts.appendChild(el);
+                    });
+                }
+
+                var text = document.getElementById('pjText');
+                if (text) {
+                    text.innerHTML = '';
+                    (d.text || []).forEach(function(p) {
+                        var el = document.createElement('p');
+                        el.textContent = p;
+                        text.appendChild(el);
+                    });
+                }
+
+                var links = document.getElementById('pjLinks');
+                if (links) {
+                    links.innerHTML = '';
+                    (d.links || []).forEach(function(l) {
+                        var isSelf = !!l.self;
+                        var note = l.note || 'Дурак, ты уже на нем';
+                        var el = document.createElement(isSelf ? 'span' : 'a');
+                        el.className = 'pj-link' + (l.ghost ? ' ghost' : '') + (isSelf ? ' pj-link-self' : '');
+                        el.textContent = l.label;
+                        if (isSelf) {
+                            // ссылка на этот же сайт: не кликается, при наведении дразнит
+                            el.setAttribute('data-note', note);
+                            el.addEventListener('click', function() {
+                                el.classList.remove('is-shake');
+                                void el.offsetWidth;
+                                el.classList.add('is-shake');
+                            });
+                        } else {
+                            el.href = l.href;
+                            el.target = '_blank';
+                            el.rel = 'noopener';
+                        }
+                        links.appendChild(el);
+                    });
+                }
+
+                var meta = document.getElementById('pjMeta');
+                if (meta) {
+                    meta.innerHTML = '<span class="pf-state ' + (d.stateClass || '') + '">' + (d.state || '') + '</span>' +
+                        '<span class="pf-year">' + (d.year || '') + '</span>';
+                }
+
+                renderProjectShots(d.shots, d.cover, d.mono);
+
+                if (projectHideTimeout) {
+                    clearTimeout(projectHideTimeout);
+                    projectHideTimeout = null;
+                }
+                projectOverlay.classList.remove('hiding');
+                projectOverlay.classList.add('show');
+                projectIsHiding = false;
+
+                var pm = document.querySelector('.project-modal');
+                if (pm) pm.scrollTop = 0;
+            }
+
+            function closeProject(e) {
+                if (e) e.preventDefault();
+                if (!projectOverlay.classList.contains('show') || projectIsHiding) return;
+                projectIsHiding = true;
+                projectOverlay.classList.add('hiding');
+                projectHideTimeout = setTimeout(function() {
+                    projectOverlay.classList.remove('show', 'hiding');
+                    projectIsHiding = false;
+                    projectHideTimeout = null;
+                }, 250);
+            }
+
+            // Карточка открывает описание проекта
+            pfCards.forEach(function(card) {
+                var id = card.getAttribute('data-project');
+                if (!id) return;
+                card.classList.add('is-link');
+                card.addEventListener('click', function() {
+                    openProject(id);
+                });
+            });
+
+            if (projectClose) projectClose.addEventListener('click', closeProject);
+            if (projectBack) projectBack.addEventListener('click', closeProject);
+
+            if (projectOverlay) {
+                projectOverlay.addEventListener('click', function(e) {
+                    if (e.target === projectOverlay) closeProject(e);
+                });
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && projectOverlay && projectOverlay.classList.contains('show')) {
+                    closeProject(e);
+                }
+            });
+
+            function applyPortfolioFilter(value) {
+                pfCards.forEach(function(card) {
+                    var show = value === 'all' || card.getAttribute('data-type') === value;
+                    card.classList.toggle('is-hidden', !show);
+                    if (!show) return;
+                    // перезапуск появления карточки
+                    card.classList.remove('pf-pop');
+                    void card.offsetWidth;
+                    card.classList.add('pf-pop');
+                });
+            }
+
+            pfFilters.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    pfFilters.forEach(function(b) { b.classList.remove('is-active'); });
+                    btn.classList.add('is-active');
+                    applyPortfolioFilter(btn.getAttribute('data-filter'));
+                });
+            });
+
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var bgVideo = document.getElementById('background');
+            if (bgVideo) {
+                bgVideo.style.opacity = '1';
+            }
+        });
+    </script>
+</body>
+</html>
